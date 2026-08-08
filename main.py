@@ -22,16 +22,16 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0x80
               ])
-RAM = None
+RAM = bytearray(4096)
 """4kB of 'RAM'"""
 
-PC = None
+PC = bytearray(2)
 """12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
 
-INDEX_REGISTER = None
-""" 16 bit index register"""
+INDEX_REGISTER = bytearray(2)
+"""12 bit index register. Actually 16 bits, but never uses more than 12."""
 
-SUBROUTINE_STACK = None
+SUBROUTINE_STACK = []
 """Stack that holds 16 bit addresses pointing to subroutines(functions)"""
 
 DELAY_TIMER = 0
@@ -40,9 +40,11 @@ DELAY_TIMER = 0
 SOUND_TIMER = 0
 """An 8-bit sound timer which functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0"""
 
-REGISTERS = None
+REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
 if __name__ == '__main__':
-    a = bytearray(16)
-    print(a)
+    print(f'RAM: {RAM}')
+    print(f'PC: {PC}')
+    print(f'I: {INDEX_REGISTER}')
+    print(f'Registers: {REGISTERS}')
