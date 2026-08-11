@@ -115,11 +115,24 @@ class EmulatedCPU(QThread):
                 time.sleep(sleep_time)
 
     def fetch_decode_execute(self):
+        # TODO: I'll start here then do font.
+        # Grab next two bytes, starting at PC. PC should start at 0x200.
+        # Increment PC by 2 bytes(same as 0x02, cuz bytes.)
+        # Mask off most significant nibble with &.
+        # Use remaining number(decimal, hex, bits, it don't matter...finally makes sense) in switch statement.
+        # Each case will execute a given opcode.
+        # Implement:
+        #   00E0 - clear screen
+        #   1NNN - jump
+        #   6XNN - set register VX
+        #   ANNN - set index register I
+        #   DXYN - display/draw
         pass
 
 
 def load_font():
     """Load font into RAM"""
+    # TODO: Load font at start of RAM. Should be able to blit straight onto byte array.
     pass
 
 class MainWindow(QMainWindow):
