@@ -150,15 +150,17 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.size())
 
 if __name__ == '__main__':
-    RAM[0] = 15
-    # print(f'RAM: {RAM[0]:08b}')
-    # print(len(RAM))
-    # print(f'PC: {PC}')
-    # print(f'I: {INDEX_REGISTER}')
-    # print(f'Registers: {REGISTERS}')
-
-    app = QApplication([])
-    window = MainWindow()
-    window.show()
-    app.exec()
-
+    # RAM[0] = 15
+    # # print(f'RAM: {RAM[0]:08b}')
+    # # print(len(RAM))
+    # # print(f'PC: {PC}')
+    # # print(f'I: {INDEX_REGISTER}')
+    # # print(f'Registers: {REGISTERS}')
+    #
+    # app = QApplication([])
+    # window = MainWindow()
+    # window.show()
+    # app.exec()
+    # a = 0xA67B
+    # b = a & 0x0FFF
+    # print(hex(b))
