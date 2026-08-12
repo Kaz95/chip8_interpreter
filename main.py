@@ -6,6 +6,15 @@ from PyQt6.QtCore import QThread
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 import pprint
+from enum import IntEnum
+
+class OpcodeCategory(IntEnum):
+    FLOW_AND_SYSTEM = 0x0000
+    JUMP = 0x1000
+    SET_CONSTANT = 0X6000
+    ADD_CONSTANT = 0X7000
+    MEMORY_INDEX = 0XA000
+    DRAW = 0XD000
 
 font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0x20, 0x60, 0x20, 0x20, 0x70,
@@ -126,30 +135,46 @@ class EmulatedCPU(QThread):
         lo_byte = self.PC[1]
         # Combine em using bit shifting and OR bitwise operator. This is the 16-bit address of the next instruction.
         next_instruction_address = hi_byte << 8 | lo_byte
-        print(next_instruction_address)
-        print(hex(next_instruction_address))
+
 
         # Grab the2 bytes of the instruction and combine them in the same way.
         next_instruction = RAM[next_instruction_address] << 8 | RAM[next_instruction_address + 1]
         # Increment PC 2 bytes. Will be ready for next fetch.
         next_instruction_address += 2
-        print(next_instruction_address)
-        print(hex(next_instruction_address))
-        print(next_instruction)
-
-        # Mask off most significant nibble with &.
-        next_instruction = next_instruction & 0xFFF
-        print(f'{next_instruction:03X}')
 
 
-        # Use remaining number(decimal, hex, bits, it don't matter...finally makes sense) in switch statement.
-        # Each case will execute a given opcode.
-        # Implement:
-        #   00E0 - clear screen
-        #   1NNN - jump
-        #   6XNN - set register VX
-        #   ANNN - set index register I
-        #   DXYN - display/draw
+        # Mask off most significant nibble with &. Big Endian....think I have that right...most sig on right.
+        next_instruction_cat = (next_instruction & 0xF000)
+        print(f'{next_instruction_cat:#06X}')
+
+        second_nibble = next_instruction & 0x0F00
+        third_nibble = next_instruction & 0x00F0
+        fourth_nibble = next_instruction & 0x000F
+
+        # print(second_nibble)
+        print(f'{second_nibble:#06X}')
+        # print(third_nibble)
+        print(f'{third_nibble:#06X}')
+        # print(fourth_nibble)
+        print(f'{fourth_nibble:#06X}')
+
+        match next_instruction_cat:
+            case OpcodeCategory.FLOW_AND_SYSTEM:
+                if fourth_nibble == 0:
+                    print('clear screen')
+                else:
+                    print('return from a subroutine')
+            case OpcodeCategory.JUMP:
+                print('jump')
+            case OpcodeCategory.SET_CONSTANT:
+                print('set register')
+            case OpcodeCategory.ADD_CONSTANT:
+                print('add constant')
+            case OpcodeCategory.MEMORY_INDEX:
+                print('set memory index I')
+            case OpcodeCategory.DRAW:
+                print('Draw')
+
         pass
 
 
