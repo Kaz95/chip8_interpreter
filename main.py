@@ -57,6 +57,9 @@ REGISTERS = bytearray(16)
 
 class EmulatedDisplay(QGraphicsView):
     """Subclass and extend QGraphicsView to serve as emulated display output."""
+
+    pause_toggle_signal = pyqtSignal(bool)
+
     def __init__(self, scale_factor=10):
         super().__init__()
         self.px_width = 64
@@ -90,6 +93,10 @@ class EmulatedDisplay(QGraphicsView):
         self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width, QImage.Format.Format_Grayscale8)
         self.pixmap_item.setPixmap(QPixmap.fromImage(self.image))
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_P:
+            self.pause_toggle_signal.emit(True)
+
 class EmulatedCPU(QThread):
     """Subclass and extend QThread to serve as emulated cpu."""
     render_signal = pyqtSignal(list)
@@ -100,6 +107,7 @@ class EmulatedCPU(QThread):
         RAM[0x201] = 0xE0
         self.PC = bytearray(2)
         self.PC[0] = 0x02
+        self.paused = False
         self.running = True
         self.display_buffer = [0] * (64 * 32)
 
@@ -113,6 +121,9 @@ class EmulatedCPU(QThread):
         frame_duration = 1.0 / self.frame_rate
 
         while self.running:
+            if self.paused:
+                time.sleep(0.1)
+                continue
             start_time = time.perf_counter()
 
             # Execute cycle burst for this frame
@@ -127,6 +138,12 @@ class EmulatedCPU(QThread):
             sleep_time = frame_duration - elapsed
             if sleep_time > 0:
                 time.sleep(sleep_time)
+
+    def pause(self):
+        if not self.paused:
+            self.paused = True
+        else:
+            self.paused = False
 
     def stop(self):
         self.running = False
@@ -195,6 +212,7 @@ class MainWindow(QMainWindow):
         self.cpu.display_buffer[0] = 1
         self.cpu.display_buffer[-1] = 1
         self.view = EmulatedDisplay()
+        self.view.pause_toggle_signal.connect(self.cpu.pause)
         self.cpu.render_signal.connect(self.view.update_screen)
         self.cpu.render_signal.emit(self.cpu.display_buffer.copy())
         self.cpu.start()
