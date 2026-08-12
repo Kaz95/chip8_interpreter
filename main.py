@@ -128,6 +128,9 @@ class EmulatedCPU(QThread):
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
+    def stop(self):
+        self.running = False
+
     def fetch_decode_execute(self):
         # TODO: Write the match statement. Use commands required for IBM logo as first cases.
         # Grab next two bytes, starting at PC. PC should start at 0x200.
@@ -194,14 +197,20 @@ class MainWindow(QMainWindow):
         self.view = EmulatedDisplay()
         self.cpu.render_signal.connect(self.view.update_screen)
         self.cpu.render_signal.emit(self.cpu.display_buffer.copy())
+        self.cpu.start()
         self.setCentralWidget(self.view)
         self.adjustSize()
         self.setFixedSize(self.size())
 
+    def closeEvent(self, event):
+        self.cpu.stop()
+        self.cpu.quit()
+        self.cpu.wait()
+        event.accept()
+
 if __name__ == '__main__':
     pass
-    cpu = EmulatedCPU()
-    cpu.fetch_decode_execute()
+
     # pprint.pp(RAM)
     # RAM[0] = 15
     # # print(f'RAM: {RAM[0]:08b}')
@@ -210,10 +219,10 @@ if __name__ == '__main__':
     # # print(f'I: {INDEX_REGISTER}')
     # # print(f'Registers: {REGISTERS}')
     #
-    # app = QApplication([])
-    # window = MainWindow()
-    # window.show()
-    # app.exec()
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec()
     # a = 0xA67B
     # b = a & 0x0FFF
     # print(hex(b))
