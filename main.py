@@ -161,6 +161,7 @@ class EmulatedCPU(QThread):
         match next_instruction_cat:
             case OpcodeCategory.FLOW_AND_SYSTEM:
                 if fourth_nibble == 0:
+                    self.display_buffer = [0] * (64 * 32)
                     print('clear screen')
                 else:
                     print('return from a subroutine')
