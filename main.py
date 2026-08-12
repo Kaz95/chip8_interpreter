@@ -24,11 +24,12 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0x80
               ])
+# TODO: Make all the global vars class attributes unless I find display needs to access them directly.
 RAM = bytearray(4096)
 """4kB of 'RAM'"""
 
-PC = bytearray(2)
-"""12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
+# PC = bytearray(2)
+# """12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
 
 INDEX_REGISTER = bytearray(2)
 """12 bit index register. Actually 16 bits, but never uses more than 12."""
@@ -86,6 +87,10 @@ class EmulatedCPU(QThread):
 
     def __init__(self):
         super().__init__()
+        RAM[0x200] = 0x00
+        RAM[0x201] = 0xE0
+        self.PC = bytearray(2)
+        self.PC[0] = 0x02
         self.running = True
         self.display_buffer = [0] * (64 * 32)
 
@@ -115,10 +120,28 @@ class EmulatedCPU(QThread):
                 time.sleep(sleep_time)
 
     def fetch_decode_execute(self):
-        # TODO: I'll start here then do font.
+        # TODO: Write the match statement. Use commands required for IBM logo as first cases.
         # Grab next two bytes, starting at PC. PC should start at 0x200.
-        # Increment PC by 2 bytes(same as 0x02, cuz bytes.)
+        hi_byte = self.PC[0]
+        lo_byte = self.PC[1]
+        # Combine em using bit shifting and OR bitwise operator. This is the 16-bit address of the next instruction.
+        next_instruction_address = hi_byte << 8 | lo_byte
+        print(next_instruction_address)
+        print(hex(next_instruction_address))
+
+        # Grab the2 bytes of the instruction and combine them in the same way.
+        next_instruction = RAM[next_instruction_address] << 8 | RAM[next_instruction_address + 1]
+        # Increment PC 2 bytes. Will be ready for next fetch.
+        next_instruction_address += 2
+        print(next_instruction_address)
+        print(hex(next_instruction_address))
+        print(next_instruction)
+
         # Mask off most significant nibble with &.
+        next_instruction = next_instruction & 0xFFF
+        print(f'{next_instruction:03X}')
+
+
         # Use remaining number(decimal, hex, bits, it don't matter...finally makes sense) in switch statement.
         # Each case will execute a given opcode.
         # Implement:
@@ -150,6 +173,10 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.size())
 
 if __name__ == '__main__':
+    pass
+    cpu = EmulatedCPU()
+    cpu.fetch_decode_execute()
+    # pprint.pp(RAM)
     # RAM[0] = 15
     # # print(f'RAM: {RAM[0]:08b}')
     # # print(len(RAM))
