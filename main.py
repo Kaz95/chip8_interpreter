@@ -122,8 +122,8 @@ class EmulatedCPU(QThread):
 
     def __init__(self):
         super().__init__()
-        RAM[0x200] = 0xa6
-        RAM[0x201] = 0x7b
+        RAM[0x200] = 0x1F
+        RAM[0x201] = 0xFF
         self.PC = bytearray(2)
         self.PC[0] = 0x02
         self.paused = False
@@ -174,6 +174,12 @@ class EmulatedCPU(QThread):
         # Combine em using bit shifting and OR bitwise operator. This is the 16-bit address of the next instruction.
         next_instruction_address = hi_byte << 8 | lo_byte
 
+        # Handle Jump that would cause PC to exceed RAM.
+        if next_instruction_address + 1 > 0xFFF:
+            print('PC out of range.')
+            self.pause()
+            return
+
         # Grab the2 bytes of the instruction and combine them in the same way.
         next_instruction = RAM[next_instruction_address] << 8 | RAM[next_instruction_address + 1]
 
@@ -222,8 +228,9 @@ class EmulatedCPU(QThread):
                 else:
                     print('Empty Byte detected.')
             case OpcodeCategory.JUMP:
-
-                print('jump')
+                self.PC[0] = second_nibble
+                self.PC[1] = third_fourth_nibble
+                print(f'jump to: {self.PC}')
             case OpcodeCategory.SET_CONSTANT:
                 print('set register')
             case OpcodeCategory.ADD_CONSTANT:
