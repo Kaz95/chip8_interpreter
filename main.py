@@ -180,8 +180,9 @@ class EmulatedCPU(QThread):
         # Increment PC 2 bytes. Will be ready for next fetch.
         next_instruction_address += 2
 
-        # Wrap if exceed ram buffer size. May add error here because afaik CHIP8 programs shouldn't ever cause a wrap.
+        # Wrap if exceed ram buffer size. FIXME May add error here because afaik CHIP8 programs shouldn't ever cause a wrap.
         next_instruction_address = next_instruction_address & 0x0FFF
+
         # print(f'{next_instruction_address:#06X}')
         hi_byte = next_instruction_address >> 8
         lo_byte = next_instruction_address & 0x00FF
@@ -198,6 +199,12 @@ class EmulatedCPU(QThread):
         third_nibble = (next_instruction & 0x00F0) >> 4
         fourth_nibble = next_instruction & 0x000F
 
+
+        second_third_fourth_nibble = (second_nibble << 8 | third_nibble << 4 | fourth_nibble)
+        third_fourth_nibble = (third_nibble << 4 | fourth_nibble)
+        print(f'{next_instruction:#06X}')
+        print(f'{second_third_fourth_nibble:#06X}')
+        print(f'{third_fourth_nibble:#06X}')
         # print(second_nibble)
         print(f'{second_nibble:#06X}')
         # print(third_nibble)
@@ -215,7 +222,7 @@ class EmulatedCPU(QThread):
                 else:
                     print('Empty Byte detected.')
             case OpcodeCategory.JUMP:
-                # FIXME Implement the rest of the Opcodes
+
                 print('jump')
             case OpcodeCategory.SET_CONSTANT:
                 print('set register')
