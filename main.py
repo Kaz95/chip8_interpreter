@@ -232,8 +232,10 @@ class EmulatedCPU(QThread):
                 self.PC[1] = third_fourth_nibble
                 print(f'jump to: {self.PC}')
             case OpcodeCategory.SET_CONSTANT:
+                # FIXME 6XNN: Set register V(X) to third/fourth byte.
                 print('set register')
             case OpcodeCategory.ADD_CONSTANT:
+                # FIXME 7XNN: Add NN to V(X). No carry.
                 print('add constant')
             case OpcodeCategory.MEMORY_INDEX:
                 print('set memory index I')
