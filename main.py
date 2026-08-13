@@ -162,13 +162,22 @@ class EmulatedCPU(QThread):
         # Increment PC 2 bytes. Will be ready for next fetch.
         next_instruction_address += 2
 
+        # Wrap if exceed ram buffer size. May add error here because afaik CHIP8 programs shouldn't ever cause a wrap.
+        next_instruction_address = next_instruction_address & 0x0FFF
+        # print(f'{next_instruction_address:#06X}')
+        hi_byte = next_instruction_address >> 8
+        lo_byte = next_instruction_address & 0x00FF
+
+        self.PC[0] = hi_byte
+        self.PC[1] = lo_byte
+        # pprint.pp(self.PC.hex())
 
         # Mask off most significant nibble with &. Big Endian....think I have that right...most sig on right.
-        next_instruction_cat = (next_instruction & 0xF000)
-        print(f'{next_instruction_cat:#06X}')
+        next_instruction_cat = (next_instruction >> 12)
+        # print(f'{next_instruction_cat:#06X}')
 
-        second_nibble = next_instruction & 0x0F00
-        third_nibble = next_instruction & 0x00F0
+        second_nibble = (next_instruction & 0x0F00) >> 8
+        third_nibble = (next_instruction & 0x00F0) >> 4
         fourth_nibble = next_instruction & 0x000F
 
         # print(second_nibble)
