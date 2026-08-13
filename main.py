@@ -1,13 +1,19 @@
 """
 CHIP-8 Interpreter, implemented in python, via pyqt6.
+
+TODO:
+    * Implement the rest of the Opcodes
+    * Implement Load font function
+    * Make all the global vars class attributes unless I find display needs to access them directly.
+    * Write tests
+
 """
-import time
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import QThread
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-import pprint
+
 from enum import IntEnum
 
 
@@ -42,7 +48,7 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0x80
               ])
-# TODO: Make all the global vars class attributes unless I find display needs to access them directly.
+
 RAM = bytearray(4096)
 """4kB of 'RAM'"""
 
@@ -209,6 +215,7 @@ class EmulatedCPU(QThread):
                 else:
                     print('Empty Byte detected.')
             case OpcodeCategory.JUMP:
+                # FIXME Implement the rest of the Opcodes
                 print('jump')
             case OpcodeCategory.SET_CONSTANT:
                 print('set register')
@@ -225,7 +232,7 @@ class EmulatedCPU(QThread):
 
 def load_font():
     """Load font into RAM"""
-    # TODO: Load font at start of RAM. Should be able to blit straight onto byte array.
+    # FIXME: Load font at start of RAM. Should be able to blit straight onto byte array.
     pass
 
 
