@@ -1,12 +1,15 @@
 """
 CHIP-8 Interpreter, implemented in python, via pyqt6.
 """
+import time
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import QThread
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
 import pprint
 from enum import IntEnum
+
 
 class OpcodeCategory(IntEnum):
     FLOW_AND_SYSTEM = 0x0
@@ -61,6 +64,7 @@ SOUND_TIMER = 0
 REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
+
 class EmulatedDisplay(QGraphicsView):
     """Subclass and extend QGraphicsView to serve as emulated display output."""
 
@@ -86,7 +90,8 @@ class EmulatedDisplay(QGraphicsView):
                 self.bytes_buffer[row_offset] = 255
                 self.bytes_buffer[row_offset + self.px_width - 1] = 255
 
-        self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width, QImage.Format.Format_Grayscale8)
+        self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width,
+                            QImage.Format.Format_Grayscale8)
         self.scene = QGraphicsScene()
         self.pixmap_item.setPixmap(QPixmap.fromImage(self.image))
         self.scene.addItem(self.pixmap_item)
@@ -96,12 +101,14 @@ class EmulatedDisplay(QGraphicsView):
 
     def update_screen(self, frame_buffer: list):
         self.bytes_buffer = bytearray([255 if x == 1 else 0 for x in frame_buffer])
-        self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width, QImage.Format.Format_Grayscale8)
+        self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width,
+                            QImage.Format.Format_Grayscale8)
         self.pixmap_item.setPixmap(QPixmap.fromImage(self.image))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_P:
             self.pause_toggle_signal.emit(True)
+
 
 class EmulatedCPU(QThread):
     """Subclass and extend QThread to serve as emulated cpu."""
@@ -109,8 +116,8 @@ class EmulatedCPU(QThread):
 
     def __init__(self):
         super().__init__()
-        RAM[0x200] = 0x00
-        RAM[0x201] = 0xE0
+        RAM[0x200] = 0xa6
+        RAM[0x201] = 0x7b
         self.PC = bytearray(2)
         self.PC[0] = 0x02
         self.paused = False
@@ -155,16 +162,15 @@ class EmulatedCPU(QThread):
         self.running = False
 
     def fetch_decode_execute(self):
-        # TODO: Write the match statement. Use commands required for IBM logo as first cases.
         # Grab next two bytes, starting at PC. PC should start at 0x200.
         hi_byte = self.PC[0]
         lo_byte = self.PC[1]
         # Combine em using bit shifting and OR bitwise operator. This is the 16-bit address of the next instruction.
         next_instruction_address = hi_byte << 8 | lo_byte
 
-
         # Grab the2 bytes of the instruction and combine them in the same way.
         next_instruction = RAM[next_instruction_address] << 8 | RAM[next_instruction_address + 1]
+
         # Increment PC 2 bytes. Will be ready for next fetch.
         next_instruction_address += 2
 
@@ -200,6 +206,8 @@ class EmulatedCPU(QThread):
                     print('clear screen')
                 elif next_instruction == OpCodes.RETURN:
                     print('return from a subroutine')
+                else:
+                    print('Empty Byte detected.')
             case OpcodeCategory.JUMP:
                 print('jump')
             case OpcodeCategory.SET_CONSTANT:
@@ -211,6 +219,7 @@ class EmulatedCPU(QThread):
             case OpcodeCategory.DRAW:
                 print('Draw')
 
+        print(next_instruction_address)
         pass
 
 
@@ -218,6 +227,7 @@ def load_font():
     """Load font into RAM"""
     # TODO: Load font at start of RAM. Should be able to blit straight onto byte array.
     pass
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -240,6 +250,7 @@ class MainWindow(QMainWindow):
         self.cpu.quit()
         self.cpu.wait()
         event.accept()
+
 
 if __name__ == '__main__':
     pass
