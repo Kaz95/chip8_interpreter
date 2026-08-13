@@ -9,12 +9,18 @@ import pprint
 from enum import IntEnum
 
 class OpcodeCategory(IntEnum):
-    FLOW_AND_SYSTEM = 0x0000
-    JUMP = 0x1000
-    SET_CONSTANT = 0X6000
-    ADD_CONSTANT = 0X7000
-    MEMORY_INDEX = 0XA000
-    DRAW = 0XD000
+    FLOW_AND_SYSTEM = 0x0
+    JUMP = 0x1
+    SET_CONSTANT = 0X6
+    ADD_CONSTANT = 0X7
+    MEMORY_INDEX = 0XA
+    DRAW = 0XD
+
+
+class OpCodes(IntEnum):
+    CLEAR_SCREEN = 0x00E0
+    RETURN = 0x00EE
+
 
 font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0x20, 0x60, 0x20, 0x20, 0x70,
@@ -189,10 +195,10 @@ class EmulatedCPU(QThread):
 
         match next_instruction_cat:
             case OpcodeCategory.FLOW_AND_SYSTEM:
-                if fourth_nibble == 0:
+                if next_instruction == OpCodes.CLEAR_SCREEN:
                     self.display_buffer = [0] * (64 * 32)
                     print('clear screen')
-                else:
+                elif next_instruction == OpCodes.RETURN:
                     print('return from a subroutine')
             case OpcodeCategory.JUMP:
                 print('jump')
