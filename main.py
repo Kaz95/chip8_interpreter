@@ -124,8 +124,12 @@ class EmulatedCPU(QThread):
 
     def __init__(self):
         super().__init__()
-        RAM[0x200] = 0x1F
-        RAM[0x201] = 0xFF
+        RAM[0x200] = 0x6F
+        RAM[0x201] = 0x05
+        RAM[0x202] = 0x7F
+        RAM[0x203] = 0x05
+        RAM[0x204] = 0xAF
+        RAM[0x205] = 0xFF
         self.PC = bytearray(2)
         self.PC[0] = 0x02
         self.paused = False
@@ -234,13 +238,16 @@ class EmulatedCPU(QThread):
                 self.PC[1] = third_fourth_nibble
                 print(f'jump to: {self.PC}')
             case OpcodeCategory.SET_CONSTANT:
-                # FIXME 6XNN: Set register V(X) to third/fourth byte.
-                print('set register')
+                REGISTERS[second_nibble] = third_fourth_nibble
+                print(f'set register general register: V{second_nibble} to {third_fourth_nibble}')
             case OpcodeCategory.ADD_CONSTANT:
-                # FIXME 7XNN: Add NN to V(X). No carry.
-                print('add constant')
+                REGISTERS[second_nibble] = REGISTERS[second_nibble] + third_fourth_nibble & 0xFF
+                print(f'Add: {third_fourth_nibble} to General Register: V{second_nibble}')
+                print(f'New value is: {REGISTERS[second_nibble]}')
             case OpcodeCategory.MEMORY_INDEX:
-                print('set memory index I')
+                INDEX_REGISTER[0] = second_nibble
+                INDEX_REGISTER[1] = third_fourth_nibble
+                print(f'set memory index I to {INDEX_REGISTER}')
             case OpcodeCategory.DRAW:
                 print('Draw')
 
