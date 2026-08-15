@@ -3,6 +3,7 @@ CHIP-8 Interpreter, implemented in python, via pyqt6.
 
 TODO:
     * Implement the rest of the Opcodes
+    * Add Step feature as debugging measure.
     * Implement Load font function
     * Make all the global vars class attributes unless I find display needs to access them directly.
     * Write tests
