@@ -249,6 +249,7 @@ class EmulatedCPU(QThread):
                 INDEX_REGISTER[1] = third_fourth_nibble
                 print(f'set memory index I to {INDEX_REGISTER}')
             case OpcodeCategory.DRAW:
+                # FIXME: Implement draw
                 print('Draw')
 
         print(next_instruction_address)
