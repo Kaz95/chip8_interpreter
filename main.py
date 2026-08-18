@@ -2,7 +2,6 @@
 CHIP-8 Interpreter, implemented in python, via pyqt6.
 
 TODO:
-    * Implement Load font function.
     * Implement ROM loading.
     * Implement remaining Opcodes.
     * Add Step feature as debugging measure.
@@ -11,6 +10,8 @@ TODO:
     * Write tests.
     * Add Docstrings.
 """
+import pprint
+from pprint import pp
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import QThread
@@ -300,9 +301,9 @@ class EmulatedCPU(QThread):
 
 
 def load_font():
-    """Load font into RAM"""
-    # FIXME: Load font at start of RAM. Should be able to blit straight onto byte array.
-    pass
+    """Blit font into RAM"""
+    RAM[:80] = font
+
 
 
 class MainWindow(QMainWindow):
@@ -332,6 +333,9 @@ if __name__ == '__main__':
     pass
     print(byte_to_list(0x200))
     print(get_cur_pixel(70, 35))
+    load_font()
+    print(len(RAM))
+    pprint.pp(RAM)
     # pprint.pp(RAM)
     # RAM[0] = 15
     # # print(f'RAM: {RAM[0]:08b}')
