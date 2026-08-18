@@ -278,11 +278,11 @@ class MainWindow(QMainWindow):
         self.adjustSize()
         self.setFixedSize(self.size())
 
-    def closeEvent(self, event):
+    def closeEvent(self, a0):
         self.cpu.stop()
         self.cpu.quit()
         self.cpu.wait()
-        event.accept()
+        super().closeEvent(a0)
 
 
 if __name__ == '__main__':
