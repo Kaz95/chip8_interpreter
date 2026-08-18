@@ -72,6 +72,47 @@ SOUND_TIMER = 0
 REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
+def byte_to_list(byte):
+    binary_string = f'{byte:b}'
+    binary_list = [int(char) for char in binary_string]
+    return binary_list
+
+def get_cur_pixel(x:int, y:int):
+    x %= 64
+    y %= 32
+    return (y * 64) + x
+
+
+def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
+    # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
+    #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
+    #  the value will be split over 2 bytes.
+    sprite_start = INDEX_REGISTER[0] << 8 | INDEX_REGISTER[1]
+    x = REGISTERS[x_register] % 64
+    y = REGISTERS[y_register] % 32
+    REGISTERS[15] = 0
+    for row in range(sprite_height):
+        cur_byte = RAM[sprite_start + row]
+        bit_list = byte_to_list(cur_byte)
+        for bit_index in range(8):
+            bit = bit_list[bit_index]
+            if bit:
+                cur_pixel = get_cur_pixel(x, y)
+                if display_buffer[cur_pixel]:
+                    display_buffer[cur_pixel] = 0
+                    REGISTERS[15] = 1
+                else:
+                    display_buffer[cur_pixel] = 1
+            if x == 63:
+                break
+            else:
+                x += 1
+        y += 1
+        if y == 31:
+            break
+
+
+
 
 class EmulatedDisplay(QGraphicsView):
     """Subclass and extend QGraphicsView to serve as emulated display output."""
@@ -249,6 +290,7 @@ class EmulatedCPU(QThread):
                 INDEX_REGISTER[1] = third_fourth_nibble
                 print(f'set memory index I to {INDEX_REGISTER}')
             case OpcodeCategory.DRAW:
+                draw(second_nibble, third_nibble, fourth_nibble, self.display_buffer)
                 # FIXME: Implement draw
                 print('Draw')
 
@@ -287,7 +329,8 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     pass
-
+    print(byte_to_list(0x200))
+    print(get_cur_pixel(70, 35))
     # pprint.pp(RAM)
     # RAM[0] = 15
     # # print(f'RAM: {RAM[0]:08b}')
@@ -296,10 +339,10 @@ if __name__ == '__main__':
     # # print(f'I: {INDEX_REGISTER}')
     # # print(f'Registers: {REGISTERS}')
     #
-    app = QApplication([])
-    window = MainWindow()
-    window.show()
-    app.exec()
+    # app = QApplication([])
+    # window = MainWindow()
+    # window.show()
+    # app.exec()
     # a = 0xA67B
     # b = a & 0x0FFF
     # print(hex(b))
