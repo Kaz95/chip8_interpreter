@@ -2,13 +2,14 @@
 CHIP-8 Interpreter, implemented in python, via pyqt6.
 
 TODO:
-    * Implement the rest of the Opcodes
+    * Implement Load font function.
+    * Implement ROM loading.
+    * Implement remaining Opcodes.
     * Add Step feature as debugging measure.
     * Add memory viewer that allows editing to aid debugging.
-    * Implement Load font function
     * Make all the global vars class attributes unless I find display needs to access them directly.
-    * Write tests
-
+    * Write tests.
+    * Add Docstrings.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
