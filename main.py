@@ -2,13 +2,13 @@
 CHIP-8 Interpreter, implemented in python, via pyqt6.
 
 TODO:
+    * Add Docstrings.
+    * Write tests.
+    * Make all the global vars class attributes unless I find display needs to access them directly.
     * Implement ROM loading.
     * Implement remaining Opcodes.
     * Add Step feature as debugging measure.
     * Add memory viewer that allows editing to aid debugging.
-    * Make all the global vars class attributes unless I find display needs to access them directly.
-    * Write tests.
-    * Add Docstrings.
 """
 import pprint
 from pprint import pp
