@@ -80,8 +80,6 @@ def byte_to_list(byte):
     return binary_list
 
 def get_cur_pixel(x:int, y:int):
-    x %= 64
-    y %= 32
     return (y * 64) + x
 
 
