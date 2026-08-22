@@ -165,12 +165,6 @@ class EmulatedCPU(QThread):
 
     def __init__(self):
         super().__init__()
-        RAM[0x200] = 0x6F
-        RAM[0x201] = 0x05
-        RAM[0x202] = 0x7F
-        RAM[0x203] = 0x05
-        RAM[0x204] = 0xAF
-        RAM[0x205] = 0xFF
         self.PC = bytearray(2)
         self.PC[0] = 0x02
         self.paused = False
@@ -314,8 +308,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('CHIP8')
         self.cpu = EmulatedCPU()
-        self.cpu.display_buffer[0] = 1
-        self.cpu.display_buffer[-1] = 1
         self.view = EmulatedDisplay()
         self.view.pause_toggle_signal.connect(self.cpu.pause)
         self.cpu.render_signal.connect(self.view.update_screen)
@@ -334,11 +326,11 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     pass
-    print(byte_to_list(0x200))
-    print(get_cur_pixel(70, 35))
-    load_font()
-    print(len(RAM))
-    pprint.pp(RAM)
+    # print(byte_to_list(0x200))
+    # print(get_cur_pixel(70, 35))
+    # load_font()
+    # print(len(RAM))
+    # pprint.pp(RAM)
     # pprint.pp(RAM)
     # RAM[0] = 15
     # # print(f'RAM: {RAM[0]:08b}')
@@ -347,10 +339,11 @@ if __name__ == '__main__':
     # # print(f'I: {INDEX_REGISTER}')
     # # print(f'Registers: {REGISTERS}')
     #
-    # app = QApplication([])
-    # window = MainWindow()
-    # window.show()
-    # app.exec()
+    load_ibm_rom()
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec()
     # a = 0xA67B
     # b = a & 0x0FFF
     # print(hex(b))
