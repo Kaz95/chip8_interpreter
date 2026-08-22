@@ -88,28 +88,28 @@ def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: l
     #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
     #  the value will be split over 2 bytes.
     sprite_start = INDEX_REGISTER[0] << 8 | INDEX_REGISTER[1]
-    x = REGISTERS[x_register] % 64
-    y = REGISTERS[y_register] % 32
+    x_start = REGISTERS[x_register]
+    y_start = REGISTERS[y_register]
     REGISTERS[15] = 0
     for row in range(sprite_height):
+        y = y_start + row
+        if y >= 32:
+            break
         cur_byte = RAM[sprite_start + row]
         bit_list = byte_to_list(cur_byte)
         for bit_index in range(8):
             bit = bit_list[bit_index]
             if bit:
+                x = x_start + bit_index
+                if x >= 64:
+                    break
                 cur_pixel = get_cur_pixel(x, y)
-                if display_buffer[cur_pixel]:
+                if display_buffer[cur_pixel] == 1:
                     display_buffer[cur_pixel] = 0
                     REGISTERS[15] = 1
                 else:
                     display_buffer[cur_pixel] = 1
-            if x == 63:
-                break
-            else:
-                x += 1
-        y += 1
-        if y == 31:
-            break
+
 
 
 
