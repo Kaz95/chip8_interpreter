@@ -75,7 +75,7 @@ REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
 def byte_to_list(byte):
-    binary_string = f'{byte:b}'
+    binary_string = f'{byte:08b}'
     binary_list = [int(char) for char in binary_string]
     return binary_list
 
