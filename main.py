@@ -297,6 +297,11 @@ class EmulatedCPU(QThread):
         print(next_instruction_address)
         pass
 
+def load_ibm_rom():
+    with open(r"C:\Users\kazac\Downloads\IBM Logo.ch8", 'rb') as file:
+        rom_data = file.read()
+        rom_size = len(rom_data)
+        RAM[0x200:(0x200+rom_size)] = rom_data
 
 def load_font():
     """Blit font into RAM"""
