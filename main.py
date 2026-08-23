@@ -1,5 +1,9 @@
 """
-CHIP-8 Interpreter, implemented in python, via pyqt6.
+CHIP-8 interpreter implemented in python.
+
+This program is built off the CHIP-8 interpreter specification. The CPU and I/O components(Key Input & Display Output)
+are emulated. The CHIP-8 interpreter runs on top of the emulated CPU, receives input from emulated key Input, and then
+outputs to an emulated display.
 
 TODO:
     * Add Docstrings.
@@ -22,6 +26,7 @@ from enum import IntEnum
 
 
 class OpcodeCategory(IntEnum):
+    """Enumerated OpCode Categories."""
     FLOW_AND_SYSTEM = 0x0
     JUMP = 0x1
     SET_CONSTANT = 0X6
@@ -31,6 +36,7 @@ class OpcodeCategory(IntEnum):
 
 
 class OpCodes(IntEnum):
+    """Enumerated Opcodes."""
     CLEAR_SCREEN = 0x00E0
     RETURN = 0x00EE
 
@@ -52,6 +58,7 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0xF0,
               0xF0, 0x80, 0xF0, 0x80, 0x80
               ])
+"""Built-in Font"""
 
 RAM = bytearray(4096)
 """4kB of 'RAM'"""
@@ -74,16 +81,29 @@ SOUND_TIMER = 0
 REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
-def byte_to_list(byte):
+# TODO: Maybe should swap to tuple? I don't want the byte list to be mutable under any circumstances I dont think?
+def byte_to_list(byte: int) -> list[int]:
+    """Convert an integer into a list of digits that represent the integer in binary
+
+    The byte(integer) is turned into an 8-bit padded binary string as an intermediate value, then that value is turned
+    into a list of digits.
+    """
     binary_string = f'{byte:08b}'
     binary_list = [int(char) for char in binary_string]
     return binary_list
 
-def get_cur_pixel(x:int, y:int):
+def get_cur_pixel(x:int, y:int) -> int:
+    """Convert a set of 2D screen coordinates to a 1D display buffer index."""
     return (y * 64) + x
 
 
 def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
+    """DXYN opcode logic
+
+     This instruction is somewhat involved.
+     TODO: I'll come back when I'm ready to take another look at my approach. I want to clean up var names and possibly
+        swap to bitwise XOR to flip bits. Will have to weigh readability vs efficiency I think.
+     """
     # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
     #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
     #  the value will be split over 2 bytes.
@@ -118,8 +138,15 @@ class EmulatedDisplay(QGraphicsView):
     """Subclass and extend QGraphicsView to serve as emulated display output."""
 
     pause_toggle_signal = pyqtSignal(bool)
+    """Custom Pause signal. Acts as a simple 2-way toggle."""
 
     def __init__(self, scale_factor=10):
+        """Initialize the EmulatedDisplay class.
+
+        Set up the emulated display. Set resolution and scale factor. Initialize the display buffer. Create underlying
+        Image, PixMap, and Scene items used by PyQt.
+        TODO: Add attribute docstrings when I move the global vars.
+        """
         super().__init__()
         self.px_width = 64
         self.px_height = 32
@@ -128,16 +155,6 @@ class EmulatedDisplay(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.pixmap_item = QGraphicsPixmapItem()
-
-        for row in range(self.px_height):
-            row_offset = row * self.px_width
-
-            if row == 0 or row == (self.px_height - 1):
-                self.bytes_buffer[row_offset:row_offset + self.px_width] = b'\xff' * self.px_width
-            else:
-                # pass
-                self.bytes_buffer[row_offset] = 255
-                self.bytes_buffer[row_offset + self.px_width - 1] = 255
 
         self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width,
                             QImage.Format.Format_Grayscale8)
@@ -148,13 +165,22 @@ class EmulatedDisplay(QGraphicsView):
         self.scale(self.scale_factor, self.scale_factor)
         self.setFixedSize(self.px_width * self.scale_factor, self.px_height * self.scale_factor)
 
-    def update_screen(self, frame_buffer: list):
+    def update_screen(self, frame_buffer: list) -> None:
+        """Update the emulated display.
+
+        Translate binary frame buffer list to 2-color grayscale.
+        TODO: I barely remember why I chose grayscale over mono and that's a problem. Look into this again. I think
+            I decided having access to so much space made optimizing for mono not make sense. Grayscale is easier to
+            map a bytearray to because it expects ints between 0-255? Pretty sure that was it.
+
+        """
         self.bytes_buffer = bytearray([255 if x == 1 else 0 for x in frame_buffer])
         self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width,
                             QImage.Format.Format_Grayscale8)
         self.pixmap_item.setPixmap(QPixmap.fromImage(self.image))
 
     def keyPressEvent(self, event):
+        """Intercept keypress event and toggle pause."""
         if event.key() == Qt.Key.Key_P:
             self.pause_toggle_signal.emit(True)
 
@@ -164,6 +190,11 @@ class EmulatedCPU(QThread):
     render_signal = pyqtSignal(list)
 
     def __init__(self):
+        """Initialize the EmulatedCPU class
+
+        Initialize the data structures and timing constants required by the CHIP-8 interpreter, as well as the emulated
+        CPU the interpreter runs on.
+        """
         super().__init__()
         self.PC = bytearray(2)
         self.PC[0] = 0x02
@@ -177,6 +208,13 @@ class EmulatedCPU(QThread):
         self.cycles_per_frame = int(self.clock_speed / self.frame_rate)
 
     def run(self):
+        """Override and extend the QThread run method.
+
+        The CPU execution loop. Timing constraints are applied, OpCodes are fetched, decoded, and executed based on
+        the aforementioned timing constraints. A signal is sent to the main thread(GUI) at regular intervals. The signal
+        carries a copy of the display buffer, which the GUI thread can then use to update the emulated display.
+        """
+        # FIXME WTH is this doing here??!! Actual confusion.
         import time
         frame_duration = 1.0 / self.frame_rate
 
@@ -199,16 +237,28 @@ class EmulatedCPU(QThread):
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-    def pause(self):
+    def pause(self) -> None:
+        """Toggle pause state of emulated CPU.
+
+        TODO: I believe the last cycle burst finishes before pausing. I should look into it and decide if this behavior
+            is what I want.
+        """
         if not self.paused:
             self.paused = True
         else:
             self.paused = False
 
-    def stop(self):
+
+    def stop(self) -> None:
+        """Stop Emulated CPU from running.
+
+        Helper function used to gracefully close when GUI window exists.
+        """
         self.running = False
 
+    # TODO This needs a heavy refactor for clarity. Extend docstring whenever I get to refactoring.
     def fetch_decode_execute(self):
+        """Fetch, decode, and execute OpCodes from RAM."""
         # Grab next two bytes, starting at PC. PC should start at 0x200.
         hi_byte = self.PC[0]
         lo_byte = self.PC[1]
@@ -291,13 +341,14 @@ class EmulatedCPU(QThread):
         print(next_instruction_address)
         pass
 
-def load_ibm_rom():
+def load_ibm_rom() -> None:
+    """Blit IBM logo test into RAM"""
     with open(r"C:\Users\kazac\Downloads\IBM Logo.ch8", 'rb') as file:
         rom_data = file.read()
         rom_size = len(rom_data)
         RAM[0x200:(0x200+rom_size)] = rom_data
 
-def load_font():
+def load_font() -> None:
     """Blit font into RAM"""
     RAM[:80] = font
 
@@ -305,6 +356,10 @@ def load_font():
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        """Initialize the main GUI window and the components of the CHIP-8 Emulator.
+
+        Create emulated CPU and Display. Connect signals between CPU thread and GUI. Start CPU.
+        """
         super().__init__()
         self.setWindowTitle('CHIP8')
         self.cpu = EmulatedCPU()
@@ -318,6 +373,7 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.size())
 
     def closeEvent(self, a0):
+        """Extend closeEvent to gracefully stop emulated CPU thread before closing main GUI thread."""
         self.cpu.stop()
         self.cpu.quit()
         self.cpu.wait()
