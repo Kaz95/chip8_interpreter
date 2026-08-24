@@ -59,26 +59,26 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               ])
 """Built-in Font"""
 
-RAM = bytearray(4096)
-"""4kB of 'RAM'"""
-
+# RAM = bytearray(4096)
+# """4kB of 'RAM'"""
+#
 # PC = bytearray(2)
 # """12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
-
-INDEX_REGISTER = bytearray(2)
-"""12 bit index register. Actually 16 bits, but never uses more than 12."""
-
-SUBROUTINE_STACK = []
-"""Stack that holds 16 bit addresses pointing to subroutines(functions)"""
-
-DELAY_TIMER = 0
-"""An 8-bit delay timer which is decremented at a rate of 60 Hz (60 times per second) until it reaches 0"""
-
-SOUND_TIMER = 0
-"""An 8-bit sound timer which functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0"""
-
-REGISTERS = bytearray(16)
-"""16 8-bit gen purpose registers. VF used for flags."""
+#
+# INDEX_REGISTER = bytearray(2)
+# """12 bit index register. Actually 16 bits, but never uses more than 12."""
+#
+# SUBROUTINE_STACK = []
+# """Stack that holds 16 bit addresses pointing to subroutines(functions)"""
+#
+# DELAY_TIMER = 0
+# """An 8-bit delay timer which is decremented at a rate of 60 Hz (60 times per second) until it reaches 0"""
+#
+# SOUND_TIMER = 0
+# """An 8-bit sound timer which functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0"""
+#
+# REGISTERS = bytearray(16)
+# """16 8-bit gen purpose registers. VF used for flags."""
 
 # TODO: Maybe should swap to tuple? I don't want the byte list to be mutable under any circumstances I dont think?
 def byte_to_list(byte: int) -> list[int]:
@@ -96,38 +96,38 @@ def get_cur_pixel(x:int, y:int) -> int:
     return (y * 64) + x
 
 
-def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
-    """DXYN opcode logic
-
-     This instruction is somewhat involved.
-     TODO: I'll come back when I'm ready to take another look at my approach. I want to clean up var names and possibly
-        swap to bitwise XOR to flip bits. Will have to weigh readability vs efficiency I think.
-     """
-    # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
-    #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
-    #  the value will be split over 2 bytes.
-    sprite_start = INDEX_REGISTER[0] << 8 | INDEX_REGISTER[1]
-    x_start = REGISTERS[x_register]
-    y_start = REGISTERS[y_register]
-    REGISTERS[15] = 0
-    for row in range(sprite_height):
-        y = y_start + row
-        if y >= 32:
-            break
-        cur_byte = RAM[sprite_start + row]
-        bit_list = byte_to_list(cur_byte)
-        for bit_index in range(8):
-            bit = bit_list[bit_index]
-            if bit:
-                x = x_start + bit_index
-                if x >= 64:
-                    break
-                cur_pixel = get_cur_pixel(x, y)
-                if display_buffer[cur_pixel] == 1:
-                    display_buffer[cur_pixel] = 0
-                    REGISTERS[15] = 1
-                else:
-                    display_buffer[cur_pixel] = 1
+# def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
+#     """DXYN opcode logic
+#
+#      This instruction is somewhat involved.
+#      TODO: I'll come back when I'm ready to take another look at my approach. I want to clean up var names and possibly
+#         swap to bitwise XOR to flip bits. Will have to weigh readability vs efficiency I think.
+#      """
+#     # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
+#     #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
+#     #  the value will be split over 2 bytes.
+#     sprite_start = INDEX_REGISTER[0] << 8 | INDEX_REGISTER[1]
+#     x_start = REGISTERS[x_register]
+#     y_start = REGISTERS[y_register]
+#     REGISTERS[15] = 0
+#     for row in range(sprite_height):
+#         y = y_start + row
+#         if y >= 32:
+#             break
+#         cur_byte = RAM[sprite_start + row]
+#         bit_list = byte_to_list(cur_byte)
+#         for bit_index in range(8):
+#             bit = bit_list[bit_index]
+#             if bit:
+#                 x = x_start + bit_index
+#                 if x >= 64:
+#                     break
+#                 cur_pixel = get_cur_pixel(x, y)
+#                 if display_buffer[cur_pixel] == 1:
+#                     display_buffer[cur_pixel] = 0
+#                     REGISTERS[15] = 1
+#                 else:
+#                     display_buffer[cur_pixel] = 1
 
 
 
@@ -210,7 +210,26 @@ class EmulatedCPU(QThread):
         """
         super().__init__()
         self.PC = bytearray(2)
-        """Program Counter."""
+        """12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
+
+        self.RAM = bytearray(4096)
+        """4kB of 'RAM'"""
+
+        self.index_register = bytearray(2)
+        """12 bit index register. Actually 16 bits, but never uses more than 12."""
+
+        self.subroutine_stack = []
+        """Stack that holds 16 bit addresses pointing to subroutines(functions)"""
+
+        self.delay_timer = 0
+        """An 8-bit delay timer which is decremented at a rate of 60 Hz (60 times per second) until it reaches 0"""
+
+        self.sound_timer = 0
+        """An 8-bit sound timer which functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0"""
+
+        self.registers = bytearray(16)
+        """16 8-bit gen purpose registers. VF used for flags."""
+
         self.PC[0] = 0x02
         self.paused = False
         """Pause Flag."""
@@ -223,6 +242,17 @@ class EmulatedCPU(QThread):
         self.clock_speed = 700
         self.frame_rate = 60
         self.cycles_per_frame = int(self.clock_speed / self.frame_rate)
+
+    def load_ibm_rom(self, ibm_rom_path) -> None:
+        """Blit IBM logo test into RAM"""
+        with open(rf"{ibm_rom_path}", 'rb') as file:
+            rom_data = file.read()
+            rom_size = len(rom_data)
+            self.RAM[0x200:(0x200 + rom_size)] = rom_data
+
+    def load_font(self) -> None:
+        """Blit font into RAM"""
+        self.RAM[:80] = font
 
     def run(self):
         """Override and extend the QThread run method.
@@ -273,6 +303,40 @@ class EmulatedCPU(QThread):
         """
         self.running = False
 
+    def draw(self, x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
+        """DXYN opcode logic
+
+         This instruction is somewhat involved.
+         TODO: I'll come back when I'm ready to take another look at my approach. I want to clean up var names and possibly
+            swap to bitwise XOR to flip bits. Will have to weigh readability vs efficiency I think.
+         """
+        # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
+        #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
+        #  the value will be split over 2 bytes.
+        sprite_start = self.index_register[0] << 8 | self.index_register[1]
+        x_start = self.registers[x_register]
+        y_start = self.registers[y_register]
+        self.registers[15] = 0
+        for row in range(sprite_height):
+            y = y_start + row
+            if y >= 32:
+                break
+            cur_byte = self.RAM[sprite_start + row]
+            bit_list = byte_to_list(cur_byte)
+            for bit_index in range(8):
+                bit = bit_list[bit_index]
+                if bit:
+                    x = x_start + bit_index
+                    if x >= 64:
+                        break
+                    cur_pixel = get_cur_pixel(x, y)
+                    if display_buffer[cur_pixel] == 1:
+                        display_buffer[cur_pixel] = 0
+                        self.registers[15] = 1
+                    else:
+                        display_buffer[cur_pixel] = 1
+
+
     # TODO This needs a heavy refactor for clarity. Extend docstring whenever I get to refactoring.
     def fetch_decode_execute(self):
         """Fetch, decode, and execute OpCodes from RAM."""
@@ -289,7 +353,7 @@ class EmulatedCPU(QThread):
             return
 
         # Grab the2 bytes of the instruction and combine them in the same way.
-        next_instruction = RAM[next_instruction_address] << 8 | RAM[next_instruction_address + 1]
+        next_instruction = self.RAM[next_instruction_address] << 8 | self.RAM[next_instruction_address + 1]
 
         # Increment PC 2 bytes. Will be ready for next fetch.
         next_instruction_address += 2
@@ -340,35 +404,23 @@ class EmulatedCPU(QThread):
                 self.PC[1] = third_fourth_nibble
                 print(f'jump to: {self.PC}')
             case OpcodeCategory.SET_CONSTANT:
-                REGISTERS[second_nibble] = third_fourth_nibble
+                self.registers[second_nibble] = third_fourth_nibble
                 print(f'set register general register: V{second_nibble} to {third_fourth_nibble}')
             case OpcodeCategory.ADD_CONSTANT:
-                REGISTERS[second_nibble] = REGISTERS[second_nibble] + third_fourth_nibble & 0xFF
+                self.registers[second_nibble] = self.registers[second_nibble] + third_fourth_nibble & 0xFF
                 print(f'Add: {third_fourth_nibble} to General Register: V{second_nibble}')
-                print(f'New value is: {REGISTERS[second_nibble]}')
+                print(f'New value is: {self.registers[second_nibble]}')
             case OpcodeCategory.MEMORY_INDEX:
-                INDEX_REGISTER[0] = second_nibble
-                INDEX_REGISTER[1] = third_fourth_nibble
-                print(f'set memory index I to {INDEX_REGISTER}')
+                self.index_register[0] = second_nibble
+                self.index_register[1] = third_fourth_nibble
+                print(f'set memory index I to {self.index_register}')
             case OpcodeCategory.DRAW:
-                draw(second_nibble, third_nibble, fourth_nibble, self.display_buffer)
+                self.draw(second_nibble, third_nibble, fourth_nibble, self.display_buffer)
                 # FIXME: Implement draw
                 print('Draw')
 
         print(next_instruction_address)
         pass
-
-def load_ibm_rom(ibm_rom_path) -> None:
-    """Blit IBM logo test into RAM"""
-    with open(rf"{ibm_rom_path}", 'rb') as file:
-        rom_data = file.read()
-        rom_size = len(rom_data)
-        RAM[0x200:(0x200+rom_size)] = rom_data
-
-def load_font() -> None:
-    """Blit font into RAM"""
-    RAM[:80] = font
-
 
 
 class MainWindow(QMainWindow):
@@ -384,6 +436,7 @@ class MainWindow(QMainWindow):
         self.view.pause_toggle_signal.connect(self.cpu.pause)
         self.cpu.render_signal.connect(self.view.update_screen)
         self.cpu.render_signal.emit(self.cpu.display_buffer.copy())
+        self.cpu.load_ibm_rom(r"C:\Users\kazac\Downloads\IBM Logo.ch8")
         self.cpu.start()
         self.setCentralWidget(self.view)
         self.adjustSize()
@@ -412,7 +465,7 @@ if __name__ == '__main__':
     # # print(f'I: {INDEX_REGISTER}')
     # # print(f'Registers: {REGISTERS}')
     #
-    load_ibm_rom(r"C:\Users\kazac\Downloads\IBM Logo.ch8")
+    # load_ibm_rom(r"C:\Users\kazac\Downloads\IBM Logo.ch8")
     app = QApplication([])
     window = MainWindow()
     window.show()
