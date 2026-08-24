@@ -6,7 +6,6 @@ are emulated. The CHIP-8 interpreter runs on top of the emulated CPU, receives i
 outputs to an emulated display.
 
 TODO:
-    * Add Docstrings.
     * Write tests.
     * Make all the global vars class attributes unless I find display needs to access them directly.
     * Implement ROM loading.
@@ -149,16 +148,30 @@ class EmulatedDisplay(QGraphicsView):
         """
         super().__init__()
         self.px_width = 64
+        """Pre-scaled screen width"""
+
         self.px_height = 32
+        """Pre-scaled screen height"""
+
         self.scale_factor = scale_factor
+        """Upscale by this factor."""
+
         self.bytes_buffer = bytearray(2048)
+        """Emulated display's video buffer."""
+
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         self.pixmap_item = QGraphicsPixmapItem()
+        """Will hold memory mapped representation of the image."""
 
         self.image = QImage(self.bytes_buffer, self.px_width, self.px_height, self.px_width,
                             QImage.Format.Format_Grayscale8)
+        """Base image, built directly through video buffer."""
+
         self.scene = QGraphicsScene()
+        """The actual canvas used for display."""
+
         self.pixmap_item.setPixmap(QPixmap.fromImage(self.image))
         self.scene.addItem(self.pixmap_item)
         self.setScene(self.scene)
@@ -197,10 +210,14 @@ class EmulatedCPU(QThread):
         """
         super().__init__()
         self.PC = bytearray(2)
+        """Program Counter."""
         self.PC[0] = 0x02
         self.paused = False
+        """Pause Flag."""
         self.running = True
+        """CPU Running Flag"""
         self.display_buffer = [0] * (64 * 32)
+        """1D video buffer."""
 
         # Timing constants
         self.clock_speed = 700
@@ -341,9 +358,9 @@ class EmulatedCPU(QThread):
         print(next_instruction_address)
         pass
 
-def load_ibm_rom() -> None:
+def load_ibm_rom(ibm_rom_path) -> None:
     """Blit IBM logo test into RAM"""
-    with open(r"C:\Users\kazac\Downloads\IBM Logo.ch8", 'rb') as file:
+    with open(rf"{ibm_rom_path}", 'rb') as file:
         rom_data = file.read()
         rom_size = len(rom_data)
         RAM[0x200:(0x200+rom_size)] = rom_data
