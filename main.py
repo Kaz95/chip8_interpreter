@@ -7,7 +7,6 @@ outputs to an emulated display.
 
 TODO:
     * Write tests.
-    * Make all the global vars class attributes unless I find display needs to access them directly.
     * Implement ROM loading.
     * Implement remaining Opcodes.
     * Add Step feature as debugging measure.
