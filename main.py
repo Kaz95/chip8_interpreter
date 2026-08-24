@@ -412,7 +412,7 @@ if __name__ == '__main__':
     # # print(f'I: {INDEX_REGISTER}')
     # # print(f'Registers: {REGISTERS}')
     #
-    load_ibm_rom()
+    load_ibm_rom(r"C:\Users\kazac\Downloads\IBM Logo.ch8")
     app = QApplication([])
     window = MainWindow()
     window.show()
