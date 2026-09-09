@@ -79,6 +79,7 @@ SOUND_TIMER = 0
 REGISTERS = bytearray(16)
 """16 8-bit gen purpose registers. VF used for flags."""
 
+
 # TODO: Maybe should swap to tuple? I don't want the byte list to be mutable under any circumstances I dont think?
 def byte_to_list(byte: int) -> list[int]:
     """Convert an integer into a list of digits that represent the integer in binary
@@ -90,7 +91,8 @@ def byte_to_list(byte: int) -> list[int]:
     binary_list = [int(char) for char in binary_string]
     return binary_list
 
-def get_cur_pixel(x:int, y:int) -> int:
+
+def get_cur_pixel(x: int, y: int) -> int:
     """Convert a set of 2D screen coordinates to a 1D display buffer index."""
     return (y * 64) + x
 
@@ -127,9 +129,6 @@ def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: l
                     REGISTERS[15] = 1
                 else:
                     display_buffer[cur_pixel] = 1
-
-
-
 
 
 class EmulatedDisplay(QGraphicsView):
@@ -246,7 +245,6 @@ class EmulatedCPU(QThread):
         else:
             self.paused = False
 
-
     def stop(self) -> None:
         """Stop Emulated CPU from running.
 
@@ -294,17 +292,14 @@ class EmulatedCPU(QThread):
         third_nibble = (next_instruction & 0x00F0) >> 4
         fourth_nibble = next_instruction & 0x000F
 
-
         second_third_fourth_nibble = (second_nibble << 8 | third_nibble << 4 | fourth_nibble)
         third_fourth_nibble = (third_nibble << 4 | fourth_nibble)
+
         print(f'{next_instruction:#06X}')
         print(f'{second_third_fourth_nibble:#06X}')
         print(f'{third_fourth_nibble:#06X}')
-        # print(second_nibble)
         print(f'{second_nibble:#06X}')
-        # print(third_nibble)
         print(f'{third_nibble:#06X}')
-        # print(fourth_nibble)
         print(f'{fourth_nibble:#06X}')
 
         match next_instruction_cat:
@@ -320,36 +315,40 @@ class EmulatedCPU(QThread):
                 self.PC[0] = second_nibble
                 self.PC[1] = third_fourth_nibble
                 print(f'jump to: {self.PC}')
+
             case OpcodeCategory.SET_CONSTANT:
                 REGISTERS[second_nibble] = third_fourth_nibble
                 print(f'set register general register: V{second_nibble} to {third_fourth_nibble}')
+
             case OpcodeCategory.ADD_CONSTANT:
                 REGISTERS[second_nibble] = REGISTERS[second_nibble] + third_fourth_nibble & 0xFF
                 print(f'Add: {third_fourth_nibble} to General Register: V{second_nibble}')
                 print(f'New value is: {REGISTERS[second_nibble]}')
+
             case OpcodeCategory.MEMORY_INDEX:
                 INDEX_REGISTER[0] = second_nibble
                 INDEX_REGISTER[1] = third_fourth_nibble
                 print(f'set memory index I to {INDEX_REGISTER}')
+
             case OpcodeCategory.DRAW:
                 draw(second_nibble, third_nibble, fourth_nibble, self.display_buffer)
                 # FIXME: Implement draw
                 print('Draw')
 
         print(next_instruction_address)
-        pass
+
 
 def load_ibm_rom() -> None:
     """Blit IBM logo test into RAM"""
     with open(r"C:\Users\kazac\Downloads\IBM Logo.ch8", 'rb') as file:
         rom_data = file.read()
         rom_size = len(rom_data)
-        RAM[0x200:(0x200+rom_size)] = rom_data
+        RAM[0x200:(0x200 + rom_size)] = rom_data
+
 
 def load_font() -> None:
     """Blit font into RAM"""
     RAM[:80] = font
-
 
 
 class MainWindow(QMainWindow):
@@ -379,25 +378,9 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    pass
-    # print(byte_to_list(0x200))
-    # print(get_cur_pixel(70, 35))
-    # load_font()
-    # print(len(RAM))
-    # pprint.pp(RAM)
-    # pprint.pp(RAM)
-    # RAM[0] = 15
-    # # print(f'RAM: {RAM[0]:08b}')
-    # # print(len(RAM))
-    # # print(f'PC: {PC}')
-    # # print(f'I: {INDEX_REGISTER}')
-    # # print(f'Registers: {REGISTERS}')
-    #
     load_ibm_rom()
     app = QApplication([])
     window = MainWindow()
     window.show()
     app.exec()
-    # a = 0xA67B
-    # b = a & 0x0FFF
-    # print(hex(b))
+
