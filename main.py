@@ -58,27 +58,6 @@ font = bytes([0xF0, 0x90, 0x90, 0x90, 0xF0,
               ])
 """Built-in Font"""
 
-# RAM = bytearray(4096)
-# """4kB of 'RAM'"""
-#
-# PC = bytearray(2)
-# """12 bit address pointing to current instruction in memory. Actually 16 bits, but never uses more than 12."""
-#
-# INDEX_REGISTER = bytearray(2)
-# """12 bit index register. Actually 16 bits, but never uses more than 12."""
-#
-# SUBROUTINE_STACK = []
-# """Stack that holds 16 bit addresses pointing to subroutines(functions)"""
-#
-# DELAY_TIMER = 0
-# """An 8-bit delay timer which is decremented at a rate of 60 Hz (60 times per second) until it reaches 0"""
-#
-# SOUND_TIMER = 0
-# """An 8-bit sound timer which functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0"""
-#
-# REGISTERS = bytearray(16)
-# """16 8-bit gen purpose registers. VF used for flags."""
-
 # TODO: Maybe should swap to tuple? I don't want the byte list to be mutable under any circumstances I dont think?
 def byte_to_list(byte: int) -> list[int]:
     """Convert an integer into a list of digits that represent the integer in binary
@@ -93,43 +72,6 @@ def byte_to_list(byte: int) -> list[int]:
 def get_cur_pixel(x:int, y:int) -> int:
     """Convert a set of 2D screen coordinates to a 1D display buffer index."""
     return (y * 64) + x
-
-
-# def draw(x_register: int, y_register: int, sprite_height: int, display_buffer: list[int]) -> None:
-#     """DXYN opcode logic
-#
-#      This instruction is somewhat involved.
-#      TODO: I'll come back when I'm ready to take another look at my approach. I want to clean up var names and possibly
-#         swap to bitwise XOR to flip bits. Will have to weigh readability vs efficiency I think.
-#      """
-#     # TODO Should probably make shifting to combine bytes into a function. Maybe even a getter and setter?
-#     #  That way everytime the value is accessed it will automatically combine them and everytime the value is set
-#     #  the value will be split over 2 bytes.
-#     sprite_start = INDEX_REGISTER[0] << 8 | INDEX_REGISTER[1]
-#     x_start = REGISTERS[x_register]
-#     y_start = REGISTERS[y_register]
-#     REGISTERS[15] = 0
-#     for row in range(sprite_height):
-#         y = y_start + row
-#         if y >= 32:
-#             break
-#         cur_byte = RAM[sprite_start + row]
-#         bit_list = byte_to_list(cur_byte)
-#         for bit_index in range(8):
-#             bit = bit_list[bit_index]
-#             if bit:
-#                 x = x_start + bit_index
-#                 if x >= 64:
-#                     break
-#                 cur_pixel = get_cur_pixel(x, y)
-#                 if display_buffer[cur_pixel] == 1:
-#                     display_buffer[cur_pixel] = 0
-#                     REGISTERS[15] = 1
-#                 else:
-#                     display_buffer[cur_pixel] = 1
-
-
-
 
 
 class EmulatedDisplay(QGraphicsView):
@@ -379,14 +321,12 @@ class EmulatedCPU(QThread):
 
         second_third_fourth_nibble = (second_nibble << 8 | third_nibble << 4 | fourth_nibble)
         third_fourth_nibble = (third_nibble << 4 | fourth_nibble)
+
         print(f'{next_instruction:#06X}')
         print(f'{second_third_fourth_nibble:#06X}')
         print(f'{third_fourth_nibble:#06X}')
-        # print(second_nibble)
         print(f'{second_nibble:#06X}')
-        # print(third_nibble)
         print(f'{third_nibble:#06X}')
-        # print(fourth_nibble)
         print(f'{fourth_nibble:#06X}')
 
         match next_instruction_cat:
@@ -398,28 +338,30 @@ class EmulatedCPU(QThread):
                     print('return from a subroutine')
                 else:
                     print('Empty Byte detected.')
+
             case OpcodeCategory.JUMP:
                 self.PC[0] = second_nibble
                 self.PC[1] = third_fourth_nibble
                 print(f'jump to: {self.PC}')
+
             case OpcodeCategory.SET_CONSTANT:
                 self.registers[second_nibble] = third_fourth_nibble
                 print(f'set register general register: V{second_nibble} to {third_fourth_nibble}')
+
             case OpcodeCategory.ADD_CONSTANT:
                 self.registers[second_nibble] = self.registers[second_nibble] + third_fourth_nibble & 0xFF
                 print(f'Add: {third_fourth_nibble} to General Register: V{second_nibble}')
                 print(f'New value is: {self.registers[second_nibble]}')
+
             case OpcodeCategory.MEMORY_INDEX:
                 self.index_register[0] = second_nibble
                 self.index_register[1] = third_fourth_nibble
                 print(f'set memory index I to {self.index_register}')
+
             case OpcodeCategory.DRAW:
                 self.draw(second_nibble, third_nibble, fourth_nibble, self.display_buffer)
-                # FIXME: Implement draw
-                print('Draw')
 
         print(next_instruction_address)
-        pass
 
 
 class MainWindow(QMainWindow):
