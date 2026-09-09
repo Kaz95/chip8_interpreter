@@ -14,8 +14,6 @@ TODO:
     * Add Step feature as debugging measure.
     * Add memory viewer that allows editing to aid debugging.
 """
-import pprint
-from pprint import pp
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import QThread
